@@ -1,0 +1,18 @@
+# Limit Order Fill Probability Calculator
+# Requirements
+
+# Core dependencies
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+
+# Volatility modeling (GARCH)
+arch>=5.0.0
+
+# Data sources (install at least one)
+yfinance>=0.2.0       # Free, no API key needed (fallback)
+# alpaca-py>=0.10.0   # Free with paper account (recommended)
+# tiingo>=0.14.0      # $10/month for unlimited (best value)
+
+# Optional: For better performance
+# numba>=0.56.0       # JIT compilation for Monte Carlo
