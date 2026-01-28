@@ -274,10 +274,59 @@ The difference grows larger for orders further from current price.
 
 ## References
 
-- First-passage time problems: [Wikipedia](https://en.wikipedia.org/wiki/First-hitting-time_model)
-- GARCH models: Bollerslev (1986), Glosten, Jagannathan & Runkle (1993)
-- Fat tails in returns: Mandelbrot, Cont (2001)
-- Yang-Zhang volatility: Yang & Zhang (2000)
+**Local copies:** Key freely-available papers are in `references/` (not committed to git):
+- `Cont_2001_Stylized_Facts.pdf` — Essential reading on return distributions
+- `Engle_2004_Nobel_Lecture_ARCH.pdf` — ARCH/GARCH explained by its creator
+- `Bollerslev_1994_ARCH_Survey.pdf` — Comprehensive GARCH survey
+- `RiskMetrics_1996_Technical_Document.pdf` — EWMA methodology
+
+### First-Passage Time & Barrier Options
+
+The probability of a price path hitting a limit order is a *first-passage time* problem. For GBM, this has a closed-form solution using the reflection principle.
+
+- **Harrison, J.M.** (1985). *Brownian Motion and Stochastic Flow Systems*. Wiley. — The definitive mathematical treatment of first-passage times for Brownian motion.
+- **Karatzas, I. & Shreve, S.E.** (1991). *Brownian Motion and Stochastic Calculus*. Springer. — Graduate-level text covering hitting times (Chapter 2.6).
+- [First-hitting-time model](https://en.wikipedia.org/wiki/First-hitting-time_model) — Wikipedia overview with key formulas.
+- **Merton, R.C.** (1973). "Theory of Rational Option Pricing." *Bell Journal of Economics*, 4(1), 141-183. — Introduces barrier option pricing, closely related to limit order fills.
+
+### Fat Tails in Asset Returns
+
+Stock returns have "fat tails" — extreme moves occur far more often than normal distributions predict. The Student's t distribution captures this with its degrees-of-freedom parameter (ν).
+
+- **Mandelbrot, B.** (1963). "The Variation of Certain Speculative Prices." *Journal of Business*, 36(4), 394-419. — The seminal paper showing stock returns aren't normal.
+- **Cont, R.** (2001). "Empirical Properties of Asset Returns: Stylized Facts and Statistical Issues." *Quantitative Finance*, 1(2), 223-236. — Comprehensive review of return distribution properties. [PDF](https://www.quantresearch.org/Cont_stylized_facts.pdf)
+- **Blattberg, R.C. & Gonedes, N.J.** (1974). "A Comparison of the Stable and Student Distributions as Statistical Models for Stock Prices." *Journal of Business*, 47(2), 244-280. — Early evidence for Student's t with ν ≈ 4-5.
+- **Bollerslev, T., Todorov, V., & Li, S.Z.** (2013). "Jump Tails, Extreme Dependencies, and the Distribution of Stock Returns." *Journal of Econometrics*, 172(2), 307-324.
+
+### GARCH Models & Volatility Clustering
+
+Volatility clusters — high-volatility periods tend to persist. GARCH models capture this with autoregressive conditional heteroskedasticity.
+
+- **Engle, R.F.** (1982). "Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation." *Econometrica*, 50(4), 987-1007. — The original ARCH paper (Nobel Prize 2003).
+- **Bollerslev, T.** (1986). "Generalized Autoregressive Conditional Heteroskedasticity." *Journal of Econometrics*, 31(3), 307-327. — Introduces GARCH.
+- **Glosten, L.R., Jagannathan, R., & Runkle, D.E.** (1993). "On the Relation between the Expected Value and the Volatility of the Nominal Excess Return on Stocks." *Journal of Finance*, 48(5), 1779-1801. — Introduces GJR-GARCH with asymmetric leverage effect.
+- **Bollerslev, T., Chou, R.Y., & Kroner, K.F.** (1992). "ARCH Modeling in Finance: A Review of the Theory and Empirical Evidence." *Journal of Econometrics*, 52(1-2), 5-59. — Comprehensive survey.
+- [arch package documentation](https://arch.readthedocs.io/) — Python implementation used in this toolkit.
+
+### Volatility Estimation
+
+Different estimators trade off bias, efficiency, and data requirements.
+
+- **Yang, D. & Zhang, Q.** (2000). "Drift-Independent Volatility Estimation Based on High, Low, Open, and Close Prices." *Journal of Business*, 73(3), 477-492. — The Yang-Zhang estimator is ~8x more efficient than close-to-close.
+- **Parkinson, M.** (1980). "The Extreme Value Method for Estimating the Variance of the Rate of Return." *Journal of Business*, 53(1), 61-65. — High-low range estimator.
+- **Garman, M.B. & Klass, M.J.** (1980). "On the Estimation of Security Price Volatilities from Historical Data." *Journal of Business*, 53(1), 67-78. — OHLC-based estimator.
+- **RiskMetrics Technical Document** (1996). J.P. Morgan/Reuters. — Introduces EWMA with λ=0.94 for daily data. [PDF](https://www.msci.com/documents/10199/5915b101-4206-4ba0-aee2-3449d5c7e95a)
+
+### Monte Carlo Methods in Finance
+
+- **Glasserman, P.** (2003). *Monte Carlo Methods in Financial Engineering*. Springer. — The standard reference for Monte Carlo in finance.
+- **Jäckel, P.** (2002). *Monte Carlo Methods in Finance*. Wiley. — Practical implementation guide.
+
+### Books for Practitioners
+
+- **Sinclair, E.** (2010). *Option Trading: Pricing and Volatility Strategies and Techniques*. Wiley. — Practical volatility trading.
+- **Taleb, N.N.** (2007). *The Black Swan*. Random House. — Accessible introduction to fat tails and their consequences.
+- **Alexander, C.** (2008). *Market Risk Analysis, Volume II: Practical Financial Econometrics*. Wiley. — GARCH modeling in practice.
 
 ## License
 
