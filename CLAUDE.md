@@ -26,6 +26,12 @@ python data_fetcher.py
 
 # Run unit tests
 python -m unittest test_fill_probability -v
+
+# Run MCP server tests
+python -m unittest test_mcp_server -v
+
+# Run all tests
+python -m unittest discover -v
 ```
 
 ## Architecture
@@ -68,3 +74,58 @@ TIINGO_API_KEY      # Tiingo API key ($10/month)
 - Student's t with nu=4 captures fat tails but not volatility clustering
 - GJR-GARCH is recommended - captures both effects via time-varying volatility with leverage effect
 - GARCH requires 100+ days of historical data for reliable parameter estimation
+
+## MCP Server
+
+The project includes an MCP server (`mcp_server.py`) that exposes the calculator as tools for Claude and other MCP clients.
+
+### Running the Server
+
+```bash
+# Run standalone
+python mcp_server.py
+
+# Test with MCP inspector
+npx @anthropics/mcp-inspector python mcp_server.py
+```
+
+### Claude Desktop Configuration
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "limit-order-probability": {
+      "command": "/path/to/limit-order-probability/venv/bin/python",
+      "args": ["/path/to/limit-order-probability/mcp_server.py"]
+    }
+  }
+}
+```
+
+Use the full path to the virtualenv Python to ensure dependencies are available.
+
+### Available Tools
+
+1. **calculate_fill_probability** - Calculate fill probability for a limit order
+   - Parameters: `symbol`, `limit_price`, `horizon_days` (default 60), `model` ("garch"/"student_t"/"gbm"/"all")
+   - Returns: fill probability, confidence interval, model details, recommendation
+
+2. **find_limit_for_probability** - Find limit price for a target fill probability (inverse function)
+   - Parameters: `symbol`, `direction` ("buy"/"sell"), `target_probability` (default 0.70), `horizon_days`
+   - Returns: recommended limit price, distance from current price
+
+3. **get_volatility_estimates** - Get volatility estimates using multiple methods
+   - Parameters: `symbol`, `lookback_days` (default 252)
+   - Returns: close-to-close, Yang-Zhang, EWMA, GARCH volatility estimates
+
+4. **analyze_order** - Comprehensive order analysis with all models
+   - Parameters: `symbol`, `limit_price`, `horizon_days`
+   - Returns: all model results, volatility data, status (GOOD/MARGINAL/TOO_AGGRESSIVE), recommendations
+
+### Design Notes
+
+- 5-minute cache for market data to avoid excessive API calls
+- GARCH model used by default; falls back to Student's t if insufficient data (<100 days)
+- All tools fetch market data automatically via DataFetcher (yfinance by default)

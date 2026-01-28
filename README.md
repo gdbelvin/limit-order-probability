@@ -177,14 +177,79 @@ Where I_{t-1} = 1 for negative returns (leverage effect).
 **Pros**: Captures both fat tails AND volatility clustering
 **Cons**: Requires sufficient historical data (100+ days)
 
+## Using with Claude Desktop (MCP Server)
+
+The toolkit includes an MCP server that lets Claude analyze your limit orders directly.
+
+### Setup
+
+1. **Locate your Claude Desktop config file:**
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+2. **Add the server configuration:**
+
+   ```json
+   {
+     "mcpServers": {
+       "limit-order-probability": {
+         "command": "/full/path/to/limit-order-probability/venv/bin/python",
+         "args": ["/full/path/to/limit-order-probability/mcp_server.py"]
+       }
+     }
+   }
+   ```
+
+   Replace `/full/path/to/` with the actual path to this repository.
+
+   **Important:** Use the full path to the virtualenv Python (`venv/bin/python`) to ensure
+   all dependencies are available. Claude Desktop has a limited PATH and won't find a bare
+   `python` command.
+
+3. **Restart Claude Desktop** to load the new server.
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `calculate_fill_probability` | Calculate fill probability for a limit order |
+| `find_limit_for_probability` | Find limit price for a target probability (inverse) |
+| `get_volatility_estimates` | Get volatility using multiple estimation methods |
+| `analyze_order` | Comprehensive analysis with all models and recommendations |
+
+### Example Prompts
+
+Once configured, ask Claude things like:
+
+- *"What's the probability my VOO limit order at $600 will fill in 60 days?"*
+- *"What limit price should I set for AAPL if I want a 70% chance of filling?"*
+- *"Analyze my limit order for MSFT at $400"*
+- *"What's the current volatility for SPY using different methods?"*
+
+### Testing the Server
+
+```bash
+# Test with MCP inspector
+npx @anthropics/mcp-inspector python mcp_server.py
+
+# Run standalone (for debugging)
+python mcp_server.py
+
+# Run unit tests
+python -m unittest test_mcp_server -v
+```
+
 ## File Structure
 
 ```
 limit_order_probability/
+├── mcp_server.py         # MCP server for Claude Desktop
 ├── fill_probability.py   # Core probability calculations
 ├── data_fetcher.py       # Multi-source data fetching
 ├── analyze_orders.py     # Portfolio analysis script
+├── test_mcp_server.py    # MCP server unit tests
 ├── requirements.txt      # Dependencies
+├── CLAUDE.md            # Instructions for Claude Code
 └── README.md            # This file
 ```
 

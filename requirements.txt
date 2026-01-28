@@ -9,6 +9,9 @@ scipy>=1.7.0
 # Volatility modeling (GARCH)
 arch>=5.0.0
 
+# MCP server
+mcp>=1.0.0
+
 # Data sources (install at least one)
 yfinance>=0.2.0       # Free, no API key needed (fallback)
 # alpaca-py>=0.10.0   # Free with paper account (recommended)
