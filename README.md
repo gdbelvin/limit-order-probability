@@ -23,6 +23,10 @@ This toolkit implements **three progressively sophisticated models**:
 git clone https://github.com/gdbelvin/limit-order-probability.git
 cd limit-order-probability
 
+# Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
