@@ -1,50 +1,92 @@
 # Limit Order Fill Probability Calculator
 
-A sophisticated toolkit for calculating the probability that a limit order will fill within a specified time horizon (30-60 days). Built for advanced retail investors who want rigorous but practical approaches to limit order pricing.
+An MCP server and Python toolkit for calculating the probability that a limit order will fill within a specified time horizon. Uses GJR-GARCH models to account for fat tails and volatility clustering in asset returns.
+
+## Example Prompts
+
+Once configured as an MCP server, ask Claude things like:
+
+- *"What's the probability my VOO limit order at $600 will fill in 60 days?"*
+- *"What limit price should I set for AAPL if I want a 70% chance of filling?"*
+- *"Analyze my limit order for MSFT at $400"*
+- *"What's the current volatility for SPY using different methods?"*
+
+## Using with Claude Desktop (MCP Server)
+
+### Setup
+
+1. **Clone and install:**
+
+   ```bash
+   git clone https://github.com/gdbelvin/limit-order-probability.git
+   cd limit-order-probability
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Add to your Claude Desktop config** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+
+   ```json
+   {
+     "mcpServers": {
+       "limit-order-probability": {
+         "command": "/full/path/to/limit-order-probability/venv/bin/python",
+         "args": ["/full/path/to/limit-order-probability/mcp_server.py"]
+       }
+     }
+   }
+   ```
+
+   **Important:** Use the full path to the virtualenv Python (`venv/bin/python`) to ensure
+   all dependencies are available.
+
+3. **Restart Claude Desktop** to load the new server.
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `calculate_fill_probability` | Calculate fill probability for a limit order |
+| `find_limit_for_probability` | Find limit price for a target probability (inverse) |
+| `get_volatility_estimates` | Get volatility using multiple estimation methods |
+| `analyze_order` | Comprehensive analysis with all models and recommendations |
+
+### Testing the Server
+
+```bash
+# Test with MCP inspector
+npx @anthropics/mcp-inspector python mcp_server.py
+
+# Run unit tests
+python -m unittest test_mcp_server -v
+```
 
 ## Why This Exists
 
-Simple volatility-based limit order calculations (like the basic P70 formula) assume returns follow a normal distribution. In reality:
+Simple volatility-based limit order calculations assume returns follow a normal distribution. In reality:
 
 - **Stock returns have fat tails**: Extreme moves happen 10-100x more often than normal distributions predict
 - **Volatility clusters**: High volatility periods tend to persist, making fills more likely in turbulent markets
 - **Asset classes differ**: Bonds mean-revert differently than equities
 
-This toolkit implements **three progressively sophisticated models**:
+This toolkit implements three progressively sophisticated models:
 
-1. **GBM Closed-Form**: Fast baseline (but underestimates fill probabilities by 30-100%)
-2. **Student's t Monte Carlo**: Captures fat tails
-3. **GJR-GARCH Monte Carlo**: Captures both fat tails AND volatility clustering (recommended)
+| Model | Fill Probability | Notes |
+|-------|-----------------|-------|
+| GBM (baseline) | 65% | Underestimates by 30-100% |
+| Student's t (v=4) | 72% | Captures fat tails |
+| GJR-GARCH | 75% | Captures fat tails + volatility clustering (recommended) |
 
-## Installation
+*Example: buy limit order 3% below current price, 60-day horizon.*
 
-```bash
-# Clone the repository
-git clone https://github.com/gdbelvin/limit-order-probability.git
-cd limit-order-probability
-
-# Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# For the recommended data source (free with Alpaca paper account):
-pip install alpaca-py
-
-# Or for the best value paid option ($10/month):
-pip install tiingo
-```
-
-## Quick Start
+## Python Library Usage
 
 ### Basic Usage
 
 ```python
 from fill_probability import FillProbabilityCalculator, FillDirection
 
-# Create calculator
 calc = FillProbabilityCalculator(
     current_price=633.0,     # Current VOO price
     limit_price=614.82,      # Your limit order
@@ -52,28 +94,11 @@ calc = FillProbabilityCalculator(
     volatility=0.1275        # 12.75% annualized volatility
 )
 
-# Get fill probability using different models
 gbm_result = calc.gbm_closed_form()
 print(f"GBM (baseline): {gbm_result.probability*100:.1f}%")
 
 t_result = calc.student_t_monte_carlo(nu=4.0)
 print(f"Student's t: {t_result.probability*100:.1f}%")
-```
-
-### Full Portfolio Analysis
-
-```python
-from analyze_orders import analyze_portfolio_orders
-
-# Analyze all orders (fetches live data)
-results = analyze_portfolio_orders(
-    horizon_days=60,
-    preferred_source='yfinance'  # or 'alpaca', 'tiingo'
-)
-
-# Export to CSV
-from analyze_orders import export_to_csv
-export_to_csv(results, 'my_analysis.csv')
 ```
 
 ### Calculate P70 Limit Price
@@ -91,16 +116,19 @@ p70_price = calculate_p70_limit(
 print(f"P70 limit: ${p70_price:.2f}")
 ```
 
-## Volatility Estimation
+### Full Portfolio Analysis
 
-The toolkit includes multiple volatility estimators:
+```python
+from analyze_orders import analyze_orders_from_csv
+
+# Reads open_orders.csv, outputs order_analysis.csv
+results = analyze_orders_from_csv('open_orders.csv')
+```
+
+### Volatility Estimation
 
 ```python
 from fill_probability import VolatilityEstimator
-import pandas as pd
-
-# Assuming you have OHLC data in a DataFrame
-# with columns: open, high, low, close
 
 # Standard close-to-close (baseline)
 vol_cc = VolatilityEstimator.close_to_close(returns, window=60)
@@ -117,158 +145,31 @@ vol_garch, details = VolatilityEstimator.fit_garch(returns_pct, horizon=30)
 
 ## Data Sources
 
-### Alpaca (Recommended - Free)
-
-Sign up for a free paper trading account at [alpaca.markets](https://alpaca.markets):
-
-```bash
-export ALPACA_API_KEY="your_key"
-export ALPACA_SECRET_KEY="your_secret"
-```
-
-```python
-from data_fetcher import DataFetcher
-
-fetcher = DataFetcher(preferred_source='alpaca')
-df = fetcher.get_ohlc('VOO', days=252)
-```
-
-### Tiingo (Best Value - $10/month)
-
-Sign up at [tiingo.com](https://www.tiingo.com):
-
-```bash
-export TIINGO_API_KEY="your_key"
-```
-
-### yfinance (Fallback - Free)
-
-No API key needed, but less reliable:
-
-```python
-fetcher = DataFetcher(preferred_source='yfinance')
-```
+| Source | Cost | Setup |
+|--------|------|-------|
+| [Alpaca](https://alpaca.markets) | Free (paper account) | `export ALPACA_API_KEY=... ALPACA_SECRET_KEY=...` |
+| [Tiingo](https://www.tiingo.com) | $10/month | `export TIINGO_API_KEY=...` |
+| yfinance | Free | No setup needed (fallback) |
 
 ## Model Details
 
 ### GBM Closed-Form
 
 Uses the reflection principle for Brownian motion:
+`P(τ_B ≤ T) = Φ(d₁) + (B/S₀)^(2μ/σ²) × Φ(d₂)`
 
-```
-P(τ_B ≤ T) = Φ(d₁) + (B/S₀)^(2μ/σ²) × Φ(d₂)
-```
-
-**Pros**: Fast, closed-form
-**Cons**: Underestimates tail events by 30-100%
+Fast but underestimates tail events by 30-100%.
 
 ### Student's t Monte Carlo
 
-Replaces normal innovations with Student's t-distribution (ν ≈ 4 for equities).
-
-**Pros**: Captures fat tails (excess kurtosis)
-**Cons**: Doesn't capture volatility clustering
+Replaces normal innovations with Student's t-distribution (v ≈ 4 for equities). Captures fat tails but not volatility clustering.
 
 ### GJR-GARCH Monte Carlo
 
 Models time-varying volatility with asymmetric response to negative returns:
+`σ²_t = ω + (α + γ·I_{t-1})ε²_{t-1} + βσ²_{t-1}`
 
-```
-σ²_t = ω + (α + γ·I_{t-1})ε²_{t-1} + βσ²_{t-1}
-```
-
-Where I_{t-1} = 1 for negative returns (leverage effect).
-
-**Pros**: Captures both fat tails AND volatility clustering
-**Cons**: Requires sufficient historical data (100+ days)
-
-## Using with Claude Desktop (MCP Server)
-
-The toolkit includes an MCP server that lets Claude analyze your limit orders directly.
-
-### Setup
-
-1. **Locate your Claude Desktop config file:**
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-
-2. **Add the server configuration:**
-
-   ```json
-   {
-     "mcpServers": {
-       "limit-order-probability": {
-         "command": "/full/path/to/limit-order-probability/venv/bin/python",
-         "args": ["/full/path/to/limit-order-probability/mcp_server.py"]
-       }
-     }
-   }
-   ```
-
-   Replace `/full/path/to/` with the actual path to this repository.
-
-   **Important:** Use the full path to the virtualenv Python (`venv/bin/python`) to ensure
-   all dependencies are available. Claude Desktop has a limited PATH and won't find a bare
-   `python` command.
-
-3. **Restart Claude Desktop** to load the new server.
-
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `calculate_fill_probability` | Calculate fill probability for a limit order |
-| `find_limit_for_probability` | Find limit price for a target probability (inverse) |
-| `get_volatility_estimates` | Get volatility using multiple estimation methods |
-| `analyze_order` | Comprehensive analysis with all models and recommendations |
-
-### Example Prompts
-
-Once configured, ask Claude things like:
-
-- *"What's the probability my VOO limit order at $600 will fill in 60 days?"*
-- *"What limit price should I set for AAPL if I want a 70% chance of filling?"*
-- *"Analyze my limit order for MSFT at $400"*
-- *"What's the current volatility for SPY using different methods?"*
-
-### Testing the Server
-
-```bash
-# Test with MCP inspector
-npx @anthropics/mcp-inspector python mcp_server.py
-
-# Run standalone (for debugging)
-python mcp_server.py
-
-# Run unit tests
-python -m unittest test_mcp_server -v
-```
-
-## File Structure
-
-```
-limit_order_probability/
-├── mcp_server.py         # MCP server for Claude Desktop
-├── fill_probability.py   # Core probability calculations
-├── data_fetcher.py       # Multi-source data fetching
-├── analyze_orders.py     # Portfolio analysis script
-├── test_mcp_server.py    # MCP server unit tests
-├── requirements.txt      # Dependencies
-├── CLAUDE.md            # Instructions for Claude Code
-└── README.md            # This file
-```
-
-## Typical Results Comparison
-
-For a buy limit order 3% below current price with 60-day horizon:
-
-| Model | Fill Probability |
-|-------|-----------------|
-| GBM (baseline) | 65% |
-| Student's t (ν=4) | 72% |
-| GJR-GARCH | 75% |
-
-The difference grows larger for orders further from current price.
+Where I_{t-1} = 1 for negative returns (leverage effect). Captures both fat tails and volatility clustering. Requires 100+ days of historical data.
 
 ## Limitations
 
