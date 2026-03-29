@@ -19,8 +19,9 @@ This toolkit implements **three progressively sophisticated models**:
 ## Installation
 
 ```bash
-# Clone or download the repository
-cd limit_order_probability
+# Clone the repository
+git clone https://github.com/gdbelvin/limit-order-probability.git
+cd limit-order-probability
 
 # Install dependencies
 pip install -r requirements.txt
