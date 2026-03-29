@@ -279,12 +279,6 @@ The difference grows larger for orders further from current price.
 
 ## References
 
-**Local copies:** Key freely-available papers are in `references/` (not committed to git):
-- `Cont_2001_Stylized_Facts.pdf` — Essential reading on return distributions
-- `Engle_2004_Nobel_Lecture_ARCH.pdf` — ARCH/GARCH explained by its creator
-- `Bollerslev_1994_ARCH_Survey.pdf` — Comprehensive GARCH survey
-- `RiskMetrics_1996_Technical_Document.pdf` — EWMA methodology
-
 ### First-Passage Time & Barrier Options
 
 The probability of a price path hitting a limit order is a *first-passage time* problem. For GBM, this has a closed-form solution using the reflection principle.
